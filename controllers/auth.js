@@ -131,7 +131,7 @@ exports.verify = async (req, res, next) => {
         return res.status(400).json({success:false, msg:'Invalid credentails'});
     }
 
-    var otpSession = await OtpSession.findOneAndDelete({user : user._id, code : code, ref: req.session.ref}, {});
+    var otpSession = await OtpSession.findOneAndDelete({user : user._id, code : code, ref: req.session.ref});
     if (!otpSession) {
         if (code !== '000000'){
             return res.status(400).json({success:false, msg:'Session Invalid'});
