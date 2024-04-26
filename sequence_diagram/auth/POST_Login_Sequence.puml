@@ -1,7 +1,7 @@
-@startuml Register (POST)
+@startuml Login (POST)
 
 footer Page %page% of %lastpage%
-title "Register (POST)"
+title "Login (POST)"
 
 participant "Client" as client
 participant "<<javaScript>>\n:server" as server
