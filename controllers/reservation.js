@@ -100,7 +100,7 @@ exports.updateReservation = async (req, res, next) => {
         var now = new Date();
         const nextThreeDays = new Date(now.setDate(now.getDate() + 3));
         if (reservation.bookingDate <= nextThreeDays){
-            return res.status(401).json({success: false ,message: "can only cancel reservation 3 days before reservation date"});
+            return res.status(400).json({success: false ,message: "can only cancel reservation 3 days before reservation date"});
         }
 
         reservation = await Reservation.findByIdAndUpdate(req.params.id, {bookingDate, hotel}, {
@@ -130,7 +130,7 @@ exports.deleteReservation = async (req, res, next) => {
         var now = new Date();
         const nextThreeDays = new Date(now.setDate(now.getDate() + 3));
         if (reservation.bookingDate <= nextThreeDays){
-            return res.status(401).json({success: false ,message: "can only delete reservation 3 days before reservation date"});
+            return res.status(400).json({success: false ,message: "can only delete reservation 3 days before reservation date"});
         }
 
         await reservation.deleteOne();
