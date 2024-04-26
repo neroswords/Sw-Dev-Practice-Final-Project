@@ -1,0 +1,30 @@
+@startuml Get All Hotels (GET)
+
+footer Page %page% of %lastpage%
+title "Get All Hotels (GET)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:hotel" as HotelRouter
+participant "<<controllers>>\n:hotel" as HotelController
+participant "<<model>>\n:Hotel" as HotelModel
+database "<<MongoDB>>\n:hotel" as HotelDatabase
+
+client->server ++:req.get('/hotels')
+server->HotelRouter ++:app.use('/hotels',getHotels)
+HotelRouter -> HotelController ++:getHotels()
+HotelController->HotelModel ++:find(query)
+note right HotelController
+query by
+# select : default select all fields
+# sort : req.query.sort || name
+# page : req.query.page || 1 (offset)
+# limit : req.query.limit || 25
+end note
+HotelModel ->HotelDatabase ++: HotelSchema
+HotelDatabase --> HotelModel --: hotels
+HotelController <-- HotelModel --:hotels
+HotelController -> HotelController ++: paginations
+HotelController-->client --:response(200)
+
+@enduml

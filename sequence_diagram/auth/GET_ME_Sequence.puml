@@ -1,0 +1,27 @@
+@startuml GET ME (GET)
+
+footer Page %page% of %lastpage%
+title "GET ME (GET)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:auth" as AuthRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:auth" as AuthController
+participant "<<model>>\n:User" as UserModel
+database "<<MongoDB>>\n:user" as UserDatabase
+
+client->server ++:req.get('/auth/me')
+server->AuthRouter ++:app.use('/auth/me',protect, getMe)
+AuthRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+Middleware -> AuthController ++:getMe()
+AuthController->UserModel ++:find(userId=req.user.id)
+UserModel ->UserDatabase ++: UserSchema
+UserDatabase --> UserModel --: user
+AuthController <-- UserModel --:user
+AuthController-->client --:response(200)
+end
+@enduml

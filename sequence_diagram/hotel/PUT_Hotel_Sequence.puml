@@ -1,0 +1,36 @@
+@startuml Update Hotel
+
+footer Page %page% of %lastpage%
+title "Update Hotel"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:hotel" as HotelRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:hotel" as HotelController
+participant "<<model>>\n:Hotel" as HotelModel
+database "<<MongoDB>>\n:hotel" as HotelDatabase
+
+client->server ++:req.put('/hotels/{id}')
+server->HotelRouter ++:app.use('/hotels/{id}',protect , authorize('admin'),updateHotel)
+HotelRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+HotelRouter->Middleware ++: authorize('admin')
+alt if error
+Middleware-->client --:response(401)
+else
+HotelRouter -> HotelController ++:updateHotel(req.path.id, req.body)
+HotelController->HotelModel ++:updateById(req.path.id, req.body)
+HotelModel ->HotelDatabase ++: HotelSchema
+HotelDatabase --> HotelModel --: hotel
+HotelController <-- HotelModel --:hotel
+alt if (!hotel)
+HotelController-->client --:response(400)
+else
+HotelController-->client --:response(200)
+end
+end
+end
+@enduml

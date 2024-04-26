@@ -1,0 +1,39 @@
+@startuml Get Reservation Report
+
+footer Page %page% of %lastpage%
+title "Get Reservation Report"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:reservation" as ReservationRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:reservation" as ReservationController
+participant "<<model>>\n:Reservation" as ReservationModel
+database "<<MongoDB>>\n:reservation" as ReservationDatabase
+
+client->server ++:req.get('/reservation/reports')
+server->ReservationRouter ++:app.use('/reservation/reports', protect, authorize('admin'),getReservationReport)
+ReservationRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter->Middleware ++: authorize('admin')
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter -> ReservationController ++:getReservationReport()
+ReservationController->ReservationModel ++:find(bookingDate in currentMonth)
+ReservationModel ->ReservationDatabase ++: ReservationSchema
+ReservationDatabase --> ReservationModel --: reservation
+ReservationController <-- ReservationModel --:reservation
+ReservationController->ReservationController : create csv file from reservation
+note over ReservationController
+csv header map data with
+NAME from reservation.user.name
+HOTEL from reservation.hotel.name
+DATE from reservation.bookingDate
+end note
+ReservationController-->client --:response(200) with csv
+end
+end
+@enduml

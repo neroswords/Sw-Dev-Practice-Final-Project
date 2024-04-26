@@ -1,0 +1,40 @@
+@startuml DELETE Reservation
+
+footer Page %page% of %lastpage%
+title "DELETE Reservation"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:reservation" as ReservationRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:reservation" as ReservationController
+participant "<<model>>\n:Reservation" as ReservationModel
+database "<<MongoDB>>\n:reservation" as ReservationDatabase
+
+client->server ++:req.delete('/reservation/{id}')
+server->ReservationRouter ++:app.use('/{id}', protect, authorize('admin', 'user'),deleteReservation)
+ReservationRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter->Middleware ++: authorize('admin')
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter -> ReservationController ++:deleteReservation(req.path.id)
+ReservationController->ReservationModel ++:findOne(hotelId=req.path.id)
+ReservationModel ->ReservationDatabase ++: ReservationSchema
+ReservationDatabase --> ReservationModel --: reservation
+ReservationController <-- ReservationModel --:reservation
+alt if ((!reservation.user !== req.user.id && req.user.role !== 'admin') || (reservation.bookingDate <= nextThreeDays))
+ReservationController -->client --:response(401)
+else
+ReservationController->ReservationModel ++: reservation.deleteOne()
+ReservationModel ->ReservationDatabase ++: ReservationSchema
+ReservationDatabase --> ReservationModel --: reservation
+ReservationController <-- ReservationModel --: reservation
+ReservationController -->client --:response(200)
+end
+end
+end
+@enduml

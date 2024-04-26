@@ -1,0 +1,49 @@
+@startuml Verify (POST)
+
+footer Page %page% of %lastpage%
+title "Verify (POST)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:auth" as AuthRouter
+participant "<<controllers>>\n:auth" as AuthController
+participant "<<model>>\n:User" as UserModel
+participant "<<model>>\n:OtpSession" as OtpSessionModel
+
+database "<<MongoDB>>\n:user" as UserDatabase
+database "<<MongoDB>>\n:otpSession" as OtpSessionDatabase
+
+client->server ++:req.post('/auth/verify')
+server->AuthRouter ++:app.use('/auth/verify',verify)
+AuthRouter -> AuthController ++: verify(req.body)
+alt if(!req.body.email || !req.body.code) || (!req.session.userId || !req.session.ref)
+AuthController-->client --:response(400)
+end
+AuthController->UserModel ++: User.find(req.body.email)
+UserModel ->UserDatabase ++: UserSchema
+UserDatabase --> UserModel --: user
+AuthController <-- UserModel --:user
+alt if (!user)
+AuthController-->client --:response(400)
+else
+AuthController->OtpSessionModel ++: OtpSession.findAndDelete(user : user._id, code : code, ref: req.session.ref)
+OtpSessionModel ->OtpSessionDatabase ++: OtpSessionSchema
+OtpSessionDatabase --> OtpSessionModel --: otpSession
+AuthController <-- OtpSessionModel --:otpSession
+
+alt if (!otpSession)
+AuthController-->client --:response(400)
+else
+AuthController->AuthController : clearSession()
+note over AuthController
+set req.session.userId = null;
+set req.session.ref = null;
+end note
+AuthController->AuthController : createToken()
+AuthController->AuthController : setCookie()
+AuthController-->client --:response(200)
+end
+end
+
+
+@enduml

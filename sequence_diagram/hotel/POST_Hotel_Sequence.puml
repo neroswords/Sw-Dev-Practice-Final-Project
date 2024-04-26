@@ -1,0 +1,32 @@
+@startuml Manage Hospital (POST)
+
+footer Page %page% of %lastpage%
+title "Manage Hospital (POST)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:hotel" as HotelRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:hotel" as HotelController
+participant "<<model>>\n:Hotel" as HotelModel
+database "<<MongoDB>>\n:hotel" as HotelDatabase
+
+client->server ++:req.post('/hotels')
+server->HotelRouter ++:app.use('/hotels',protect , authorize('admin'),createHotel)
+HotelRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+HotelRouter->Middleware ++: authorize('admin')
+alt if error
+Middleware-->client --:response(401)
+else
+HotelRouter -> HotelController ++:createHotel()
+HotelController->HotelModel ++:create(req.body)
+HotelModel ->HotelDatabase ++: HospitalSchema
+HotelDatabase --> HotelModel --: hospital
+HotelController <-- HotelModel --:hospital
+HotelController-->client --:response
+end
+end
+@enduml

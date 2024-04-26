@@ -1,0 +1,58 @@
+@startuml Register (POST)
+
+footer Page %page% of %lastpage%
+title "Register (POST)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:auth" as AuthRouter
+participant "<<controllers>>\n:auth" as AuthController
+participant "<<model>>\n:User" as UserModel
+participant "<<model>>\n:OtpSession" as OtpSessionModel
+participant "SMTP" as SMTP
+
+database "<<MongoDB>>\n:user" as UserDatabase
+database "<<MongoDB>>\n:otpSession" as OtpSessionDatabase
+
+client->server ++:req.post('/auth/login')
+server->AuthRouter ++:app.use('/auth/login',login)
+AuthRouter -> AuthController ++: login(req.body)
+alt if (!req.body.email || !req.body.password)
+AuthController-->client --:response(400)
+else
+
+AuthController->UserModel ++: User.find(email:req.body.email)
+UserModel ->UserDatabase ++: UserSchema
+UserDatabase --> UserModel --: user
+AuthController <-- UserModel --:user
+alt if (!user)
+AuthController-->client --:response(400)
+else
+AuthController->AuthController : isMatch = user.matchPassword(req.body.password)
+alt if (!isMatch)
+AuthController-->client --:response(400)
+else
+AuthController->AuthController : generateOtpAndRef()
+AuthController->OtpSessionModel : OtpSession.upsert()
+note over OtpSessionModel
+code from code from generateOtpAndRef
+ref from ref from generateOtpAndRef
+user from req.user.id
+end note
+OtpSessionModel ->OtpSessionDatabase ++: OtpSessionSchema
+OtpSessionDatabase --> OtpSessionModel --: otpSession
+AuthController <-- OtpSessionModel --:otpSession
+AuthController -->SMTP : send mail with otp_code and ref
+AuthController->AuthController : setSession()
+note over AuthController
+set req.session.userId = user._id;
+set req.session.ref = otpRef;
+end note
+AuthController-->client --:response(200)
+end
+end
+end
+
+
+
+@enduml

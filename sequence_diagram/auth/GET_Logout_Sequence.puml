@@ -1,0 +1,22 @@
+@startuml GET Logout (GET)
+
+footer Page %page% of %lastpage%
+title "GET Logout (GET)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:auth" as AuthRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:auth" as AuthController
+
+client->server ++:req.get('/auth/logout')
+server->AuthRouter ++:app.use('/auth/logout',protect ,logout)
+AuthRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+AuthRouter -> AuthController ++:logout()
+AuthController->AuthController : clearCookies()
+AuthController-->client --:response(200)
+end
+@enduml

@@ -1,0 +1,36 @@
+@startuml DELETE Hotel
+
+footer Page %page% of %lastpage%
+title "DELETE Hotel"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:hotel" as HotelRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:hotel" as HotelController
+participant "<<model>>\n:Hotel" as HotelModel
+database "<<MongoDB>>\n:hotel" as HotelDatabase
+
+client->server ++:req.delete('/hotels/{id}')
+server->HotelRouter ++:app.use('/hotels/{id}',protect , authorize('admin'),deleteHotel)
+HotelRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+HotelRouter->Middleware ++: authorize('admin')
+alt if error
+Middleware-->client --:response(401)
+else
+HotelRouter -> HotelController ++:deleteHotel(req.path.id)
+HotelController->HotelModel ++:deleteOne(hotelId=req.path.id)
+HotelModel ->HotelDatabase ++: HotelSchema
+HotelDatabase --> HotelModel --: hotel
+HotelController <-- HotelModel --:hotel
+alt if (!hotel)
+HotelController-->client --:response(400)
+else
+HotelController-->client --:response(200)
+end
+end
+end
+@enduml

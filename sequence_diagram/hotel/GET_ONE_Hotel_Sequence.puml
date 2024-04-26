@@ -1,0 +1,27 @@
+@startuml Manage Hotel (GET ONE)
+
+footer Page %page% of %lastpage%
+title "Manage Hotel (GET ONE)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:hotel" as HotelRouter
+participant "<<controllers>>\n:hotel" as HotelController
+participant "<<model>>\n:Hotel" as HotelModel
+database "<<MongoDB>>\n:hotel" as HotelDatabase
+
+client->server ++:req.get('/hotels/{id}')
+server->HotelRouter ++:app.use('/hotels/{id}',getHotel)
+HotelRouter -> HotelController ++:getHotel(req.path.id)
+HotelController->HotelModel ++:findBy(hotelId=req.path.id)
+HotelModel ->HotelDatabase ++: HotelSchema
+HotelDatabase --> HotelModel --: hotel
+HotelController <-- HotelModel --:hotel
+alt if (!hotel)
+HotelController-->client --:response(400)
+else
+HotelController-->client --:response(200)
+end
+
+
+@enduml

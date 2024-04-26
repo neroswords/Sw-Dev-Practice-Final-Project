@@ -1,0 +1,50 @@
+@startuml Create Reservation (POST)
+
+footer Page %page% of %lastpage%
+title "Create Reservation (POST)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:reservation" as ReservationRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:reservation" as ReservationController
+participant "<<model>>\n:Reservation" as ReservationModel
+participant "<<model>>\n:Hotel" as HotelModel
+database "<<MongoDB>>\n:reservation" as ReservationDatabase
+database "<<MongoDB>>\n:hotel" as HotelDatabase
+
+client->server ++:req.post('/hotels/{hotelId}/reservation')
+server->ReservationRouter ++:app.use('/hotels/{hotelId}/reservation', protect, authorize('admin', 'user'),addReservation)
+ReservationRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter->Middleware ++: authorize('admin')
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter -> ReservationController ++:addReservation()
+ReservationController->HotelModel ++: Hotel.find(id=req.params.hotelId)
+ReservationModel ->HotelDatabase ++: HotelSchema
+HotelDatabase --> HotelModel --: hotel
+ReservationController <-- HotelModel --:hotel
+alt if (!hotel)
+ReservationController->client :response(404)
+else
+ReservationController->ReservationModel ++: Reservation.find(user=req.user.id)
+ReservationModel ->ReservationDatabase ++: ReservationSchema
+ReservationDatabase --> ReservationModel --: existedReservation
+ReservationController <-- ReservationModel --:existedReservation
+alt if (existedReservation.length >= 3 && req.user.role !== 'admin')
+ReservationController->client :response(400)
+else
+ReservationController->ReservationModel ++: Reservation.create(req.body)
+ReservationModel ->ReservationDatabase ++: HospitalSchema
+ReservationDatabase --> ReservationModel --: hospital
+ReservationController <-- ReservationModel --:hospital
+ReservationController-->client --:response(200)
+end
+end
+end
+end
+@enduml

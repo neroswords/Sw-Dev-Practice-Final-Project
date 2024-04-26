@@ -1,0 +1,45 @@
+@startuml Update Reservation
+
+footer Page %page% of %lastpage%
+title "Update Reservation"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:reservation" as ReservationRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:reservation" as ReservationController
+participant "<<model>>\n:Reservation" as ReservationModel
+database "<<MongoDB>>\n:reservation" as ReservationDatabase
+
+client->server ++:req.put('/reservation/{id}')
+server->ReservationRouter ++:app.use('/reservation/{id}', protect, authorize('admin', 'user'),updateReservation)
+ReservationRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter->Middleware ++: authorize('admin')
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter->ReservationController++: updateReservation()
+ReservationController->ReservationModel ++:find(id=req.params.id)
+ReservationModel ->ReservationDatabase ++: ReservationSchema
+ReservationDatabase --> ReservationModel --: reservation
+ReservationController <-- ReservationModel --:reservation
+alt if (!reservation)
+ReservationController-->client :response(404)
+else
+alt if (reservation.user !== req.user.id && req.user.role !== 'admin')
+ReservationController-->client --:response(401)
+else
+ReservationRouter -> ReservationController ++:updateReservation(req.path.id, req.body)
+ReservationController->ReservationModel ++:updateById(req.path.id, req.body)
+ReservationModel ->ReservationDatabase ++: ReservationSchema
+ReservationDatabase --> ReservationModel --: reservation
+ReservationController <-- ReservationModel --:reservation
+ReservationController-->client --:response(200)
+end
+end
+end
+end
+@enduml

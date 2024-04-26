@@ -1,0 +1,35 @@
+@startuml Get All Reservations (GET)
+
+footer Page %page% of %lastpage%
+title "Get All Reservations (GET)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:reservation" as ReservationRouter
+participant "<<middleware>>\n:auth" as Middleware
+participant "<<controllers>>\n:reservation" as ReservationController
+participant "<<model>>\n:Reservation" as ReservationModel
+database "<<MongoDB>>\n:reservation" as ReservationDatabase
+
+client->server ++:req.get('/reservation')
+server->ReservationRouter ++:app.use('/reservation', protect,getReservations)
+ReservationRouter->Middleware ++: protect()
+alt if error
+Middleware-->client --:response(401)
+else
+ReservationRouter -> ReservationController ++:getReservations()
+alt if (req.user.role !== 'admin')
+ReservationController->ReservationModel ++:find(userId : req.user.id)
+else
+alt if (req.params.hotelId)
+ReservationController->ReservationModel :find(hotel : req.params.hotelId)
+else
+ReservationController->ReservationModel :findAll()
+end
+end
+ReservationModel ->ReservationDatabase ++: ReservationSchema
+ReservationDatabase --> ReservationModel --: reservation
+ReservationController <-- ReservationModel --:reservation
+ReservationController-->client --:response(200)
+end
+@enduml
