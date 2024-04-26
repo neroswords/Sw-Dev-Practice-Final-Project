@@ -103,6 +103,7 @@ exports.reGenerateOtp = async (req, res, next) => {
             return res.status(500).json({success:false, msg:"some thing went wrong"});
         }
         MailHandler(user.email, "OTP For Login", `<h1>OtpCode : ${otpCode}</h1><h1>Ref : ${otpRef}</h1>`)
+        req.session.ref = otpRef
         return res.status(200).json({success:true, data:{otpRef}});
     } else {
         res.status(401).json({success:false, msg:'User not found.'});
@@ -130,7 +131,7 @@ exports.verify = async (req, res, next) => {
         return res.status(400).json({success:false, msg:'Invalid credentails'});
     }
 
-    var otpSession = await OtpSession.findOneAndDelete({user : user._id, code : code, ref: req.session.ref});
+    var otpSession = await OtpSession.findOneAndDelete({user : user._id, code : code, ref: req.session.ref}, {});
     if (!otpSession) {
         if (code !== '000000'){
             return res.status(400).json({success:false, msg:'Session Invalid'});

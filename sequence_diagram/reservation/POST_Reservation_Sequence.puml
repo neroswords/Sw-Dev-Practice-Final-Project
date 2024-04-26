@@ -39,9 +39,9 @@ alt if (existedReservation.length >= 3 && req.user.role !== 'admin')
 ReservationController->client :response(400)
 else
 ReservationController->ReservationModel ++: Reservation.create(req.body)
-ReservationModel ->ReservationDatabase ++: HospitalSchema
-ReservationDatabase --> ReservationModel --: hospital
-ReservationController <-- ReservationModel --:hospital
+ReservationModel ->ReservationDatabase ++: HotelSchema
+ReservationDatabase --> ReservationModel --: hotel
+ReservationController <-- ReservationModel --:hotel
 ReservationController-->client --:response(200)
 end
 end

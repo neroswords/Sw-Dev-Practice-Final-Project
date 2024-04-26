@@ -1,7 +1,7 @@
-@startuml Manage Hospital (POST)
+@startuml Manage Hotel (POST)
 
 footer Page %page% of %lastpage%
-title "Manage Hospital (POST)"
+title "Manage Hotel (POST)"
 
 participant "Client" as client
 participant "<<javaScript>>\n:server" as server
@@ -23,9 +23,9 @@ Middleware-->client --:response(401)
 else
 HotelRouter -> HotelController ++:createHotel()
 HotelController->HotelModel ++:create(req.body)
-HotelModel ->HotelDatabase ++: HospitalSchema
-HotelDatabase --> HotelModel --: hospital
-HotelController <-- HotelModel --:hospital
+HotelModel ->HotelDatabase ++: HotelSchema
+HotelDatabase --> HotelModel --: hotel
+HotelController <-- HotelModel --:hotel
 HotelController-->client --:response
 end
 end
