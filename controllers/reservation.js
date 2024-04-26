@@ -96,6 +96,13 @@ exports.updateReservation = async (req, res, next) => {
         if(reservation.user.toString() !== req.user.id && req.user.role !== 'admin'){
             return res.status(401).json({success: false ,message: `User ${req.user.id} is not authorized to update this reservation`});
         }
+
+        var now = new Date();
+        const nextThreeDays = new Date(now.setDate(now.getDate() + 3));
+        if (reservation.bookingDate <= nextThreeDays){
+            return res.status(401).json({success: false ,message: "can only cancel reservation 3 days before reservation date"});
+        }
+
         reservation = await Reservation.findByIdAndUpdate(req.params.id, {bookingDate, hotel}, {
             new : true,
             runValidators: true
